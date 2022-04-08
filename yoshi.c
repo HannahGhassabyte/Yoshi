@@ -78,37 +78,34 @@ int main(void)
 	volatile int *pushbutton = 0xFF200050;
 	
 	//position of yoshi from the top left. the last number indicates jump status
-	int yoshi_position[] = {50,119,0,1};
+	int yoshi_position[] = {50,119,0,-1};
 	//{x pos top left, y pos top left, jump y incrementer, direction 1 up -1 down}
 		
 	while(1){ 
-		int key = *pushbutton;
 		clear_screen(); //erase the back buffer first
-		
+		int key;
 		//draw_line(x1, y1, x2, y2, color);
 		draw_line(0, 170, 340, 170, ORANGE);   // for ground
 		
-		//if yoshi has y-increment: dont check the keys
-		if(yoshi_position[2] = 0){
-			//poll the keys only if yoshi isnot currently jumping
-			if(key==1){
+		//if yoshi has no y-increment:check the keys
+		if(yoshi_position[2] == 0){
+			key = *pushbutton; //poll the keys only if yoshi isnot currently jumping
+			if(key!=0){
 				yoshi_position[2] = 1; //y-increment	
 			}
 		}
 		   
 		//check the direction of yoshi
-		   if(yoshi_position[2] == 50){ //if y-increment is 50
-				 yoshi_position[3] == -1; //nextmove down
+		   if(yoshi_position[2] == -50){ //if y-increment is 50
+				 yoshi_position[3] = 1; //nextmove down
 		   }else if(yoshi_position[2] == 0){ //if y-increment is 0
-				 yoshi_position[3] == 1;//next move up
+				 yoshi_position[3] = -1;//next move up
 		   }
-		yoshi_position[2] += direction
+		
+		//if yoshi is moving then increment
+		if (key!=0){ yoshi_position[2] += yoshi_position[3];};
 		draw_yoshi(yoshi_position);
-		
-		}
-
-
-		
+				
 		//wait and swap buffers
 		wait_for_vsync(); // swap front and back buffers on VGA vertical sync
 		pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
