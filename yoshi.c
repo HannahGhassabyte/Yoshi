@@ -47,10 +47,9 @@ int abs(int x);
 void wait_for_vsync();
 
 //game functions
-//jump
 void draw_yoshi(int yoshi_position[]);
-
-// Begin part1.s for Lab 7
+void draw_bowser(int bowser_position[]);
+int crash_checker(int yoshi_position[], int bowser_position[]);
 
 volatile int pixel_buffer_start; // global variable
 
@@ -77,25 +76,32 @@ int main(void)
 	//GAME CODE
 	volatile int *pushbutton = 0xFF200050;
 	
-	//position of yoshi
+	//yoshi attributes
 	int base_y = 119;
-	int dy = 0; // -1 for up, 1 for down
+	int dy = 0; // -5 for up, 5 for down
 	int yoshi_position[] = {50,119};
-	//{x pos top left, y pos top left, jump y incrementer, direction 1 up -1 down}
+	
+	//bowser attributes
+	int base_b = 0;
+	int dx = -5;
+	int bowser_position[] = {320,144};
+	
+	//othr variables
 	int key;	
 	while(1){ 
 		clear_screen(); //erase the back buffer first
 		
+		//**FOR BACKGROUND**//
 		//draw_line(x1, y1, x2, y2, color);
 		draw_line(0, 170, 340, 170, ORANGE);   // for ground
 		
+		//**FOR YOSHI**//
 		//if yoshi has no y-increment:check the keys
 		if(yoshi_position[1] == base_y){ //if yoshi currently not jmupin
 			key = *pushbutton; //poll the keys
 			if(key!=0){ //if key has been pressed
-				draw_line(0, 50, 50, 50, RED); 
-				dy = -1; //start incrementing up	
-				key =0;
+				dy = -5; //start incrementing up	
+				key =0; //reset pushbutton
 			}	
 		}
 		yoshi_position[1]+=dy;
@@ -103,18 +109,52 @@ int main(void)
 		//draw yoshi
 		draw_yoshi(yoshi_position);
 		
-		//check the direction of yoshi
+		//check and switch the direction of yoshi
 		if(yoshi_position[1] == 69){ //if y-increment 119-50=69
-			dy = 1; //nextmove down
+			dy = 5; //nextmove down
 		}else if(yoshi_position[1] == base_y){ //if y-increment is 0
 			dy = 0;//finished jumping
 		}
-				
+		
+		//**FOR BOWSER**//
+		draw_bowser(bowser_position);
+		
+		if(bowser_position[0] == -25){bowser_position[0] = 320;}
+		
+		//**CHECK IF CRASHED**//
+		int crashed = crash_checker(yoshi_position, bowser_position);
+		
+		//**INCREMENT BOTH DRAWINGS**//
+		bowser_position[0]+=dx;
+		
+		
 		//wait and swap buffers
 		wait_for_vsync(); // swap front and back buffers on VGA vertical sync
 		pixel_buffer_start = *(pixel_ctrl_ptr + 1); // new back buffer
 
 	}   
+}
+
+//Check if Crashed
+int crash_checker(int yoshi_position[], int bowser_position[]){
+	//lower right corner of yoshi
+	int x_yoshi = yoshi_position[0] +50;
+	int y_yoshi = yoshi_position[1] +50;
+	int yoshi_size =50;
+	
+	//upper left corner of yoshi
+	int x_bowser = bowser_position[0];
+	int y_bowser = bowser_position[1];
+	int bowser_size = 25;
+	
+	//conditions of crashing
+	if ((y_yoshi>=y_bowser) && (x_bowser<=x_yoshi) &&(x_bowser>=yoshi_position[0]-bowser_size)){
+		draw_line(0, 50, 50, 50, RED);   // for ground
+		return 1; //crashed
+		
+	}
+	return 0; //didnt crash
+	
 }
 
 //Drawing yoshi
@@ -126,6 +166,19 @@ void draw_yoshi(int yoshi_position[]){
 		for(j=0;j<=50;j++){	
 			//Step1: draw yoshi
 			plot_pixel(yoshi_position[0] + i, yoshi_position[1]+ j, PINK);
+			
+		}
+	}
+}
+//Drawing bowser
+void draw_bowser(int bowser_position[]){
+	//drawning
+	int i;
+	int j;
+	for(i=0;i<=25;i++){
+		for(j=0;j<=25;j++){	
+			//Step1: draw yoshi
+			plot_pixel(bowser_position[0] + i, bowser_position[1]+ j, GREEN);
 			
 		}
 	}
