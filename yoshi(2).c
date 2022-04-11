@@ -21,6 +21,7 @@ void draw_background(int bg_height, int bg_width, short int background[bg_height
 void check_coin_collision(); 
 void draw_character(int x, int y, char ascii);
 void draw_score();
+void check_bowser_collision(); 
 
 // Constants
 #define y_size 65 
@@ -53,8 +54,10 @@ int x_pos_coin;
 int y_pos_coin;
 int background_speed = 10000000; // time = 1/200 MHZ * 20000000 = 0.1 secs
 int yoshi_jump = 0; 
+int double_jump = 0; 
 int y_pos_yoshi = YOSHI_Y_START;
 int score = 0; 
+int gameover = 0; 
 
 void set_random_coin_pos();
 
@@ -101,19 +104,27 @@ int main(void)
 	while (1) // wait for an interrupt
 	{
 		clear_screen();
-		draw_score(); 
-		draw_background(27, 340, background, x_pos_bg_1);
-		draw_background(27,340, background, x_pos_bg_2);
-		//erase_image(b_size, x_position_bowser+2, BOWSER_Y);
-		check_coin_collision(); 
-		draw_image(y_size, yoshi, YOSHI_X, y_pos_yoshi);
-		draw_image(c_size, coin, x_pos_coin, y_pos_coin); 
-		draw_image(b_size, bowser, x_position_bowser, BOWSER_Y);
+		// add game start logic 
+		if(!gameover)
+		{
+			draw_score(); 
+			draw_background(27, 340, background, x_pos_bg_1);
+			draw_background(27,340, background, x_pos_bg_2);
+			//erase_image(b_size, x_position_bowser+2, BOWSER_Y);
+			check_coin_collision(); 
+			check_bowser_collision();
+			draw_image(y_size, yoshi, YOSHI_X, y_pos_yoshi);
+			draw_image(c_size, coin, x_pos_coin, y_pos_coin); 
+			draw_image(b_size, bowser, x_position_bowser, BOWSER_Y);}
+		else 
+		{
+			//draw the gameover screen 
+		}
 		//wait and swap buffers
 		wait_for_vsync(); // swap front and back buffers on VGA vertical sync
 		pixel_buffer_start = *(pixel_ctrl_ptr + 1); // update pointer to memory where u draw the next image -> get from dma controller
+		
 	}
-	
 }
 
 /* setup the KEY interrupts in the FPGA */
@@ -276,8 +287,11 @@ void pushbutton_ISR( void )
 	//int HEX_bits;
 	press = *(KEY_ptr + 3); // read the pushbutton interrupt register
 	*(KEY_ptr + 3) = press; // Clear the interrupt
-	if (press & 0x1) // KEY0
+	if (press & 0x1 && double_jump < 2)// KEY0
+	{
 		yoshi_jump = -1;
+		double_jump ++;
+	}
 	//*HEX3_HEX0_ptr = HEX_bits;
 	return;
 }
@@ -326,7 +340,9 @@ void timer_ISR()
 	}
 	else if (y_pos_yoshi < YOSHI_Y_START && yoshi_jump == 1) 
 		y_pos_yoshi +=yoshi_jump;
-		
+	
+	else if(y_pos_yoshi == YOSHI_Y_START) 
+		double_jump = 0; 	
 }
 
 // When s=0 the backbuffer and front buffer contents are swapped
@@ -438,4 +454,15 @@ void draw_score()
 	draw_character(97,0,'C'); 
 }
 
+void check_bowser_collision() 
+{
+	if(x_position_bowser > YOSHI_X && x_position_bowser < y_size+YOSHI_X)
+	{
+		if(y_pos_yoshi + y_size > BOWSER_Y)
+		{
+			gameover = 1; 
+		}
+	}
+	
+}
 
