@@ -78,7 +78,9 @@ int main(void)
 	volatile int *pushbutton = 0xFF200050;
 	
 	//position of yoshi
-	int yoshi_position[] = {50,119,0,-1};
+	int base_y = 119;
+	int dy = 0; // -1 for up, 1 for down
+	int yoshi_position[] = {50,119};
 	//{x pos top left, y pos top left, jump y incrementer, direction 1 up -1 down}
 	int key;	
 	while(1){ 
@@ -88,26 +90,25 @@ int main(void)
 		draw_line(0, 170, 340, 170, ORANGE);   // for ground
 		
 		//if yoshi has no y-increment:check the keys
-		if(yoshi_position[2] == 0){
-			key = *pushbutton; //poll the keys only if yoshi isnot currently jumping
-			if(key!=0){
-				yoshi_position[2] = 1; //y-increment	
-				
+		if(yoshi_position[1] == base_y){ //if yoshi currently not jmupin
+			key = *pushbutton; //poll the keys
+			if(key!=0){ //if key has been pressed
+				draw_line(0, 50, 50, 50, RED); 
+				dy = -1; //start incrementing up	
+				key =0;
 			}	
 		}
-		   
-		//check the direction of yoshi
-		   if(yoshi_position[2] == -50){ //if y-increment is 50
-				 yoshi_position[3] = 1; //nextmove down
-		   }else if(yoshi_position[2] == 0){ //if y-increment is 0
-				 yoshi_position[3] = -1;//next move up
-		   }
+		yoshi_position[1]+=dy;
 		
-		//if yoshi is moving then increment
-		if (key!=0){ 
-			yoshi_position[2] += yoshi_position[3];
-		};
+		//draw yoshi
 		draw_yoshi(yoshi_position);
+		
+		//check the direction of yoshi
+		if(yoshi_position[1] == 69){ //if y-increment 119-50=69
+			dy = 1; //nextmove down
+		}else if(yoshi_position[1] == base_y){ //if y-increment is 0
+			dy = 0;//finished jumping
+		}
 				
 		//wait and swap buffers
 		wait_for_vsync(); // swap front and back buffers on VGA vertical sync
@@ -124,7 +125,8 @@ void draw_yoshi(int yoshi_position[]){
 	for(i=0;i<=50;i++){
 		for(j=0;j<=50;j++){	
 			//Step1: draw yoshi
-			plot_pixel(yoshi_position[0] + i, yoshi_position[1]+yoshi_position[2] + j, PINK);
+			plot_pixel(yoshi_position[0] + i, yoshi_position[1]+ j, PINK);
+			
 		}
 	}
 }
