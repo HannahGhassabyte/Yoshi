@@ -18,6 +18,9 @@ void plot_pixel(int x, int y, short int line_color);
 void draw_image(int size, short int image[size][size], int start_position_x, int start_position_y);;
 void erase_image(int size, int start_postion_x, int start_position_y) ;
 void draw_background(int bg_height, int bg_width, short int background[bg_height][bg_width], int x_pos_bg);
+void check_coin_collision(); 
+void draw_character(int x, int y, char ascii);
+void draw_score();
 
 // Constants
 #define y_size 65 
@@ -29,6 +32,8 @@ void draw_background(int bg_height, int bg_width, short int background[bg_height
 #define BOWSER_Y 169
 #define BLACK 0x0000
 #define BG_Y 213 
+#define YOSHI_Y_START 149
+#define YOSHI_X 40
 	
 	
 // Image arrays 
@@ -39,12 +44,18 @@ short int background[27][340] = {{0x00c0, 0x00c0, 0x00c0, 0x00c0, 0x00c0, 0x00c0
 
 // pixel_buffer
 volatile int pixel_buffer_start; 
+volatile int character_buffer_start; 
+
 int x_position_bowser = RESOLUTION_X; 
 int x_pos_bg_1 = 0; 
 int x_pos_bg_2 = RESOLUTION_X;
 int x_pos_coin;
 int y_pos_coin;
-int background_speed = 20000000; // time = 1/200 MHZ * 20000000 = 0.1 secs
+int background_speed = 10000000; // time = 1/200 MHZ * 20000000 = 0.1 secs
+int yoshi_jump = 0; 
+int y_pos_yoshi = YOSHI_Y_START;
+int score = 0; 
+
 void set_random_coin_pos();
 
 int main(void)
@@ -58,7 +69,12 @@ int main(void)
 	enable_A9_interrupts (); // enable interrupts in the A9 processor
 	
 	// Setup VGA pixel buffer 
-	 volatile int * pixel_ctrl_ptr = (int *)0xFF203020;
+	volatile int * pixel_ctrl_ptr = (int *)0xFF203020;
+	
+	// Setup character buffer 
+	volatile int* character_ctrl_ptr = (int*)0xFF203030;
+	character_buffer_start  = *character_ctrl_ptr;
+	
     /* set front pixel buffer to start of FPGA On-chip memory */
     *(pixel_ctrl_ptr + 1) = 0xC8000000; // first store the address in the back buffer
 	/* now, swap the front/back buffers, to set the front buffer location */
@@ -85,10 +101,12 @@ int main(void)
 	while (1) // wait for an interrupt
 	{
 		clear_screen();
+		draw_score(); 
 		draw_background(27, 340, background, x_pos_bg_1);
 		draw_background(27,340, background, x_pos_bg_2);
 		//erase_image(b_size, x_position_bowser+2, BOWSER_Y);
-		draw_image(y_size, yoshi, 40, 150);
+		check_coin_collision(); 
+		draw_image(y_size, yoshi, YOSHI_X, y_pos_yoshi);
 		draw_image(c_size, coin, x_pos_coin, y_pos_coin); 
 		draw_image(b_size, bowser, x_position_bowser, BOWSER_Y);
 		//wait and swap buffers
@@ -253,19 +271,14 @@ void pushbutton_ISR( void )
 	/* KEY base address */
 	volatile int *KEY_ptr = (int *) 0xFF200050;
 	/* HEX display base address */
-	volatile int *HEX3_HEX0_ptr = (int *) 0xFF200020;
-	int press, HEX_bits;
+	//volatile int *HEX3_HEX0_ptr = (int *) 0xFF200020;
+	int press;
+	//int HEX_bits;
 	press = *(KEY_ptr + 3); // read the pushbutton interrupt register
 	*(KEY_ptr + 3) = press; // Clear the interrupt
 	if (press & 0x1) // KEY0
-	HEX_bits = 0b00111111;
-	else if (press & 0x2) // KEY1
-	HEX_bits = 0b00000110;
-	else if (press & 0x4) // KEY2
-	HEX_bits = 0b01011011;
-	else // press & 0x8, which is KEY3
-	HEX_bits = 0b01001111;
-	*HEX3_HEX0_ptr = HEX_bits;
+		yoshi_jump = -1;
+	//*HEX3_HEX0_ptr = HEX_bits;
 	return;
 }
 
@@ -297,16 +310,24 @@ void timer_ISR()
 		x_pos_bg_2--; 
 	else 
 		x_pos_bg_2 = RESOLUTION_X;
-	
+
 	// Increment the coin
 	if(x_pos_coin > -c_size)
 		x_pos_coin--; 
 	else 
 		set_random_coin_pos();
 	
-	
+	if(y_pos_yoshi > c_size-10 && yoshi_jump  == -1) 
+		y_pos_yoshi += yoshi_jump; 
+	else if (y_pos_yoshi == c_size-10 && yoshi_jump == -1) 
+	{
+		yoshi_jump = 1;
+		y_pos_yoshi += yoshi_jump; 
+	}
+	else if (y_pos_yoshi < YOSHI_Y_START && yoshi_jump == 1) 
+		y_pos_yoshi +=yoshi_jump;
+		
 }
-
 
 // When s=0 the backbuffer and front buffer contents are swapped
 void wait_for_vsync()
@@ -382,6 +403,39 @@ void draw_background(int bg_height, int bg_width, short int background[bg_height
 void set_random_coin_pos()
 {
 	y_pos_coin = (rand() % 126);
-	x_pos_coin = (rand() % (500 - RESOLUTION_X + 1)) + RESOLUTION_X;
+	x_pos_coin = (rand() % (450 - RESOLUTION_X + 1)) + RESOLUTION_X;
 
 }
+
+void check_coin_collision()
+{
+	if(x_pos_coin > YOSHI_X && x_pos_coin < y_size+YOSHI_X)
+	{
+	// Did yoshi hit it 
+		if(y_pos_yoshi<y_pos_coin+c_size)
+		{
+			score++; 
+			set_random_coin_pos();
+		}
+				
+
+	}
+}
+
+void draw_character(int x, int y, char ascii)
+{
+	*(char *)(character_buffer_start + (y << 10) + (x << 1)) = ascii;	
+}
+
+void draw_score()
+{
+	draw_character(103, 0, (char)(score+'0')); 
+	draw_character(102, 0, ':'); 
+	draw_character(101, 0, 'S'); 
+	draw_character(100,0, 'N'); 
+	draw_character(99, 0, 'I'); 
+	draw_character(98, 0, 'O'); 
+	draw_character(97,0,'C'); 
+}
+
+
