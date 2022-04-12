@@ -49,6 +49,7 @@ void wait_for_vsync();
 //game functions
 void draw_yoshi(int yoshi_position[]);
 void draw_bowser(int bowser_position[]);
+void game_over(int status);
 int crash_checker(int yoshi_position[], int bowser_position[]);
 
 volatile int pixel_buffer_start; // global variable
@@ -87,7 +88,10 @@ int main(void)
 	int bowser_position[] = {320,144};
 	
 	//othr variables
-	int key;	
+	int key;
+	int start = 1;
+	int game_over_status = 0; //0=game still going, -1=game lost, 1=game won
+	
 	while(1){ 
 		clear_screen(); //erase the back buffer first
 		
@@ -122,7 +126,10 @@ int main(void)
 		if(bowser_position[0] == -25){bowser_position[0] = 320;}
 		
 		//**CHECK IF CRASHED**//
-		int crashed = crash_checker(yoshi_position, bowser_position);
+		int game_over_status = crash_checker(yoshi_position, bowser_position);
+		
+		if(game_over_status !=0){game_over(game_over_status);}
+		
 		
 		//**INCREMENT BOTH DRAWINGS**//
 		bowser_position[0]+=dx;
@@ -134,6 +141,12 @@ int main(void)
 
 	}   
 }
+
+void game_over(int status){
+	clear_screen();
+	
+}
+
 
 //Check if Crashed
 int crash_checker(int yoshi_position[], int bowser_position[]){
@@ -150,7 +163,7 @@ int crash_checker(int yoshi_position[], int bowser_position[]){
 	//conditions of crashing
 	if ((y_yoshi>=y_bowser) && (x_bowser<=x_yoshi) &&(x_bowser>=yoshi_position[0]-bowser_size)){
 		draw_line(0, 50, 50, 50, RED);   // for ground
-		return 1; //crashed
+		return -1; //crashed
 		
 	}
 	return 0; //didnt crash
