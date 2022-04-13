@@ -21,6 +21,7 @@ void draw_background(int bg_height, int bg_width, short int background[bg_height
 void check_coin_collision(); 
 void draw_character(int x, int y, char ascii);
 void draw_score();
+void erase_score();
 void check_bowser_collision(); 
 void character_selector();
 
@@ -127,9 +128,11 @@ int main(void)
 			draw_image(b_size, bowser, x_position_bowser, BOWSER_Y);}
 		else if (gameover) 
 		{
+			erase_score();
 			gameover_screen();
 		}
 		else if(boolstart){
+			erase_score();
 			start_screen();	
 		}
 		//wait and swap buffers
@@ -533,6 +536,17 @@ void draw_score()
 	draw_character(99, 0, 'I'); 
 	draw_character(98, 0, 'O'); 
 	draw_character(97,0,'C'); 
+}
+
+void erase_score()
+{
+	draw_character(103, 0, (char)('  ')); 
+	draw_character(102, 0, ' '); 
+	draw_character(101, 0, ' '); 
+	draw_character(100,0, ' '); 
+	draw_character(99, 0, ' '); 
+	draw_character(98, 0, ' '); 
+	draw_character(97,0,' '); 
 }
 
 void check_bowser_collision() 
