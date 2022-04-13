@@ -121,6 +121,7 @@ int main(void)
 		// add game start logic 
 		if(!gameover && !boolstart)
 		{
+			
 			draw_score(); 
 			draw_background(27, 340, background, x_pos_bg_1);
 			draw_background(27,340, background, x_pos_bg_2);
@@ -383,6 +384,10 @@ void pushbutton_ISR( void )
 				character_selector();
 			}
 			boolstart = 0; //the game is starting
+			
+			//reset the positions of the characters
+			x_position_bowser = RESOLUTION_X;
+			set_random_coin_pos();
 		}
 	}
 		return;
