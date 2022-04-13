@@ -63,6 +63,7 @@ int yoshi_jump = 0;
 int double_jump = 0; 
 int y_pos_yoshi = YOSHI_Y_START;
 int score = 0; 
+int highscore = 0;
 int gameover = 0; 
 int boolstart = 1;
 int character_choice = 0;
@@ -70,6 +71,7 @@ int character_choice = 0;
 void set_random_coin_pos();
 void gameover_screen();
 void start_screen();
+void display_highscore_hex();
 
 int main(void)
 {
@@ -110,6 +112,8 @@ int main(void)
   	srand((unsigned) time(&t));
 	
 	set_random_coin_pos(); 
+	//display the high score on the hex, currently is 0
+	display_highscore_hex();
 	
 	while (1) // wait for an interrupt
 	{
@@ -129,6 +133,10 @@ int main(void)
 		else if (gameover) 
 		{
 			erase_score();
+			//check the score if it is a highscore to display on hex
+			display_highscore_hex();
+			//reset the score
+			score = 0;
 			gameover_screen();
 		}
 		else if(boolstart){
@@ -559,5 +567,38 @@ void check_bowser_collision()
 		}
 	}
 	
+}
+
+void display_highscore_hex(){
+	//setup hex
+	char seg7[] = {0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x67};
+	char letter[] = {0x38, 0x47};
+	volatile int *hex1 = 0xFF200020;
+	volatile int *hex2 = 0xFF200030;
+	
+	
+	//if score is less than highscore, dont update hex
+	if (highscore>score){
+		return;
+	}
+	
+	//update highscore if score is higher than current highscore
+	highscore = score;
+	
+	//display highscore on hex
+	//extract each integer from the score to display on hex
+	int num[6] = {0,0,0,0,0,0};
+	int index,digit;
+	int integerNum=highscore;
+
+	while (integerNum != 0) {
+		digit = integerNum % 10;
+		num[index] = digit;
+		index++;
+		integerNum = integerNum / 10;
+	}
+	//display high score on hex
+	*hex1 = (seg7[num[3]]<<24)|(seg7[num[2]]<<16)|(seg7[num[1]]<<8)|seg7[num[0]];
+	*hex2 = (seg7[num[5]]<<8)|seg7[num[4]];
 }
 
