@@ -252,14 +252,18 @@ void help_screen(){
 
 void character_selector(){
 	if(character_choice ==0){
-		for (int i = 0; i < y_size; i++){
-			for (int j = 0; j < y_size; j++){
+		int i;
+		for (i = 0; i < y_size; i++){
+			int j;
+			for (j= 0; j < y_size; j++){
 				yoshi[i][j] = char1[i][j];
 			}
 		}
 	}else if (character_choice ==1){
-		for (int i = 0; i < y_size; i++){
-			for (int j = 0; j < y_size; j++){
+		int i;
+		for (i = 0; i < y_size; i++){
+			int j;
+			for (j= 0; j < y_size; j++){
 				yoshi[i][j] = char2[i][j];
 			}
 		}
@@ -550,8 +554,10 @@ void wait_for_vsync()
 
 // code clear_screen() and draw_line() subroutines
 void clear_screen(){
-	for(int x = 0; x <= 319; x++){
-		for(int y = 0; y <= 239; y++){
+	int x;
+	for(x = 0; x <= 319; x++){
+		int y;
+		for(y = 0; y <= 239; y++){
 			plot_pixel(x,y,0);
 		}
 	}
