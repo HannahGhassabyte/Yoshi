@@ -76,6 +76,8 @@ void gameover_screen();
 void start_screen();
 void display_highscore_hex();
 void help_screen();
+void draw_endscreen_final_score();
+void erase_endscreen_final_score();
 
 int main(void)
 {
@@ -140,17 +142,20 @@ int main(void)
 		else if (gameover) 
 		{
 			erase_score();
+			draw_endscreen_final_score();
+			
 			//check the score if it is a highscore to display on hex
 			display_highscore_hex();
-			//reset the score
-			score = 0;
 			gameover_screen();
 		}
 		else if(boolstart){
+			
 			if(draworexit_help==1){
 				help_screen();
 			}else{
 			erase_score();
+			erase_endscreen_final_score();
+			score = 0;
 			start_screen();
 			}
 
@@ -165,6 +170,7 @@ int main(void)
 
 //**GAME OVER SCREEN**//
 void gameover_screen(){
+	//display game over image
 	int row; 
 	int col;
 	for(row = 0; row < 240; row++)
@@ -175,6 +181,29 @@ void gameover_screen(){
 		}
 	}
 	 
+}
+
+void draw_endscreen_final_score(){
+	//display using characte buffer your score
+	
+	draw_character(103, 0, (char)(score+'0')); 
+	draw_character(102, 0, ':'); 
+	draw_character(101, 0, 'E'); 
+	draw_character(100,0, 'R'); 
+	draw_character(99, 0, 'O'); 
+	draw_character(98, 0, 'C'); 
+	draw_character(97,0,'S'); 
+}
+void erase_endscreen_final_score(){
+	//display using characte buffer your score
+	
+	draw_character(103, 0, (char)('  ')); 
+	draw_character(102, 0, ' '); 
+	draw_character(101, 0, ' '); 
+	draw_character(100,0, ' '); 
+	draw_character(99, 0, ' '); 
+	draw_character(98, 0, ' '); 
+	draw_character(97,0,' '); 
 }
 
 void start_screen(){
